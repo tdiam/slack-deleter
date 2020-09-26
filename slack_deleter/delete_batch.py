@@ -2,9 +2,7 @@ import argparse
 import os
 import time
 
-import slack
-
-from .env import env_str
+from .utils import get_client, normalize_timestamp
 
 
 class BatchDeleter:
@@ -14,7 +12,7 @@ class BatchDeleter:
             description='Delete messages from a list of timestamp IDs. Replies are also deleted.'
         )
         parser.add_argument('channel', help='Channel ID')
-        parser.add_argument('ts', nargs='+', help='Timestamps of messages')
+        parser.add_argument('ts', nargs='+', help='Timestamps of messages (format: 1586185432.000100 or 1586185432000100 or p1586185432000100)')
 
         args = parser.parse_args(argv)
         delete_count = self.run(args)
@@ -24,10 +22,11 @@ class BatchDeleter:
             print('No messages found')
 
     def run(self, args):
-        client = slack.WebClient(token=env_str('SLACK_TOKEN'))
+        client = get_client()
         response = client.conversations_history(channel=args.channel, limit=1000)
+        ts = [normalize_timestamp(t) for t in args.ts]
         matches = [
-            msg for msg in response.data['messages'] if msg['ts'] in args.ts
+            msg for msg in response.data['messages'] if msg['ts'] in ts
         ]
 
         delete_count = 0

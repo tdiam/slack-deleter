@@ -6,21 +6,17 @@ Repository: https://github.com/dobarkod/django-template
 '''
 
 import os
+from pathlib import Path
 
 __all__ = ['BASE_DIR', 'abs_path', 'env_bool', 'env_str', 'env_list']
 
 
-BASE_DIR = os.path.dirname(__file__)
+ENV_PATH = Path(__file__).parent.parent / '.env'
 
 
 def env_setting(key, default):
     '''Gets plain value from environment variable'''
     return os.environ.get(key, default)
-
-
-def abs_path(*args):
-    '''Transforms relative path from `args` to absolute path, based on project root directory'''
-    return os.path.join(BASE_DIR, *args)
 
 
 def env_bool(name, default=False):
@@ -75,7 +71,7 @@ def env_list(name, separator=',', default=None):
 
 
 def _load_env_file():
-    envfile = abs_path('.env')
+    envfile = ENV_PATH.resolve()
     if os.path.isfile(envfile):
         with open(envfile, 'r', encoding='utf-8') as fp:
             for line in fp:
@@ -87,3 +83,4 @@ def _load_env_file():
 
 
 _load_env_file()
+

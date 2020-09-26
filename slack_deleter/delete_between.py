@@ -2,9 +2,7 @@ import argparse
 import os
 import time
 
-import slack
-
-from .env import env_str
+from .utils import get_client, normalize_timestamp
 
 
 class BetweenDeleter:
@@ -16,7 +14,7 @@ class BetweenDeleter:
                 'based on the parent timestamps.'
         )
         parser.add_argument('channel', help='Channel ID')
-        parser.add_argument('--from_ts', help='First timestamp to delete', default='0000000000.000000')
+        parser.add_argument('--from_ts', help='First timestamp to delete (format: 1586185432.000100 or 1586185432000100 or p1586185432000100)', default='0000000000.000000')
         parser.add_argument('--until_ts', help='Last timestamp to delete', default='9999999999.999999')
 
         args = parser.parse_args(argv)
@@ -27,10 +25,12 @@ class BetweenDeleter:
             print(f'No messages found')
 
     def run(self, args):
-        client = slack.WebClient(token=env_str('SLACK_TOKEN'))
+        client = get_client()
         response = client.conversations_history(channel=args.channel, limit=1000)
+        from_ts = normalize_timestamp(args.from_ts)
+        until_ts = normalize_timestamp(args.until_ts)
         matches = [
-            msg for msg in response.data['messages'] if args.from_ts <= msg['ts'] <= args.until_ts
+            msg for msg in response.data['messages'] if from_ts <= msg['ts'] <= until_ts
         ]
 
         delete_count = 0
